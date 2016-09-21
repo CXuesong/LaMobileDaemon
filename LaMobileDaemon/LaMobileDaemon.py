@@ -8,7 +8,7 @@ import logging
 logging.getLogger().level = logging.INFO
 
 config = ConfigParser()
-config.read("LaMobile.ini")
+config.read("Confidential/LaMobile.ini")
 
 client = APIClient(app_key=Confidential.APP_KEY, app_secret=Confidential.APP_SECRET, redirect_uri=Confidential.CALLBACK_URL)
 
@@ -20,7 +20,7 @@ def SetConfig(section, key, value) :
     config.set(section, key, str(value))
 
 def SaveConfig() :
-    with open('LaMobile.ini', 'w') as configfile:
+    with open('Confidential/LaMobile.ini', 'w') as configfile:
         config.write(configfile)
 
 def Login() :
