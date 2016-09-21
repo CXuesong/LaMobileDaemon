@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 from pprint import pprint
 import os
+import WikiPageDistiller
 
 # Change PyWikiBot working directory
 os.environ["PYWIKIBOT2_DIR"] = os.path.abspath("./Confidential")
@@ -56,14 +57,18 @@ except FileNotFoundError :
 
 def ParsePage(page : pywikibot.Page) :
     request = site._simple_request(action="query", titles=page.title(),
-                                         prop="pageimages|extracts",
+                                         prop="pageimages",
                                          piprop="thumbnail",
-                                         pithumbsize=200,
-                                         exchars=200,
-                                         explaintext=1,
-                                         exsectionformat="wiki",
-                                         exvariant="zh-cn")
-    result = request.submit()
-    pprint(result)
+                                         pithumbsize=200)
+    data = request.submit()
+    assert "query" in data, "API request response lacks 'query' key"
+    assert "pages" in data["query"], "API request response lacks 'pages' key"
+    _, page = data["query"]["pages"].popitem()
+    imageUrl = None
+    if "thumbnail" in page : imageUrl = page["thumbnail"]["source"]
+    print(imageUrl)
+    return WikiPagePushInfo(page.title(withNamespace=False), page.full_url(), None, imageUrl)
 
 #def PickRandom() :
+#ParsePage(pywikibot.Page(site, "火星"))
+WikiPageDistiller.DistillHtml(pywikibot.Page(site, "火星")._get_parsed_page())

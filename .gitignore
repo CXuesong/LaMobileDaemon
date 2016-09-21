@@ -246,3 +246,4 @@ __pycache__/
 LaMobile.ini
 Confidential.py
 Confidential/
+*.temp

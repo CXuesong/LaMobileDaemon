@@ -26,6 +26,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="LaMobileDaemon.py" />
+    <Compile Include="WikiPageDistiller.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="WikiPagesProvider.py">
       <SubType>Code</SubType>
     </Compile>
