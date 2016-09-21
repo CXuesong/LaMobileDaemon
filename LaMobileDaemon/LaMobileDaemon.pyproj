@@ -22,6 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Confidential.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="LaMobileDaemon.py" />
   </ItemGroup>
   <PropertyGroup>
