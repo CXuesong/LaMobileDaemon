@@ -1,4 +1,4 @@
-﻿#! python3
+﻿#!/usr/bin/env python3
 
 import Confidential
 from weibo import APIClient
