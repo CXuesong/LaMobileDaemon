@@ -34,8 +34,8 @@ def TestPost() :
     print(client.statuses.update.post(status="测试状态。Test post."))
 
 def PushWikiPage() :
-    #wp = WikiPagesProvider.RecommendRandomPage()
-    wp = WikiPagesProvider.RecommendPage("半月")
+    wp = WikiPagesProvider.RecommendRandomPage()
+    #wp = WikiPagesProvider.RecommendPage("半月")
     image = wp.getImageResponse()
     # So that _encode_multipart in weibo.py will handle content-type correctly.
     image.name = wp.postImageName
