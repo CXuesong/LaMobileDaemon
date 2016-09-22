@@ -4,11 +4,11 @@ from datetime import datetime
 import webbrowser
 import logging
 from Config import GetConfig, SetConfig, SaveConfig
+import WikiPagesProvider
+from io import BytesIO
+from urllib import request
 
 logging.getLogger().level = logging.INFO
-
-config = ConfigParser()
-config.read("Confidential/LaMobile.ini")
 
 client = APIClient(app_key=Confidential.APP_KEY, app_secret=Confidential.APP_SECRET, redirect_uri=Confidential.CALLBACK_URL)
 
@@ -33,6 +33,16 @@ def Login() :
 def TestPost() :
     print(client.statuses.update.post(status="测试状态。Test post."))
 
+def PushWikiPage() :
+    #wp = WikiPagesProvider.RecommendRandomPage()
+    wp = WikiPagesProvider.RecommendPage("半月")
+    image = wp.getImageResponse()
+    # So that _encode_multipart in weibo.py will handle content-type correctly.
+    image.name = wp.postImageName
+    client.statuses.upload.post(status=request.quote(wp.getPostContent(postTextBytesLimit=(140-12)*2)), pic=image)
+    logging.info("Pushed wiki page: %s .", wp.pageTitle)
+
 Login()
+PushWikiPage()
 #print(client.statuses.user_timeline.get())
 #TestPost()

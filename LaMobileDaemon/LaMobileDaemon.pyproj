@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ae6d5274-d008-4f6f-a92e-d521e96eaea6</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>WikiPagesProvider.py</StartupFile>
+    <StartupFile>LaMobileDaemon.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

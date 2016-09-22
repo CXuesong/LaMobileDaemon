@@ -28,7 +28,7 @@ def isNoneOrWhitespace(x) :
 
 # Refines distilled text
 def refineText(text : str) :
-    text = re.sub("（英文：(.*?)）", r"（\1）", text)
+    #text = re.sub("（英文：(.*?)）", r"（\1）", text)
     return text
 
 def ParseMainQuote(soup : BeautifulSoup) :
@@ -87,20 +87,19 @@ def IterateContentNodes(node) :
     return IterateNodes(node.next_siblings)
 
 def ParseATrivia(soup : BeautifulSoup) :
-    # Find a non-trivial trivia
-    SCORE_THRESHOLD = 1.0
+    # Find a non-trivial trivia (score > 0)
     keywords = {
         "误" : -1,
-        ("描述为", "维多利亚") : -0.5,
-        "描写为" : -0.5,
-        "确认" : -0.5,
+        ("描写为", "描述为") : -0.5,
+        "确认" : 0.3,
         "凯特" : 0.5,
         ("维琪", "维多利亚") : 0.5,
         "基立" : 0.7,
         "访谈" : 0.5,
-        "揭露" : 0.5,
-        "透露" : 0.5,
+        ("揭露", "透露") : 0.5,
         "爱" : 1,
+        "争议" : 1,
+        ("读者", "粉丝") : 0.7,
         }
     node = None
     for n in soup("h2") :
@@ -122,24 +121,38 @@ def ParseATrivia(soup : BeautifulSoup) :
             # Score it!
             score = 0
             for ks in keywords :
-                if type(ks) == str : k = (ks, )
+                deltaScore = keywords[ks]
+                if type(ks) == str : ks = (ks, )
                 for k in ks :
                     if k in text :
-                        score += keywords[ks]
+                        score += deltaScore
                         break
-            if score > SCORE_THRESHOLD :
+            if score > 0 :
                 trivia.append((score, text))
     if len(trivia) == 0 : return 0, None
     score, text = max(trivia, key=lambda t : t[0])
-    logging.info("Selected trivia %s with raw score= %f .", text[:10], score)
+    logging.info("Selected trivia %s with score = %f .", text[:10], score)
     return score, refineText(text)
 
 # zh Warriors Wiki specific
 def DistillHtml(html : str) :
     profile = PageProfile()
     soup = BeautifulSoup(html, "html.parser")
+    for node in soup(("abbr", "table")) : node.decompose()
     for node in soup(class_=("toc", "reference")) : node.decompose()
     profile.mainQuote = ParseMainQuote(soup)
     profile.introduction = (ParseLeadingText(soup) or "") + (ParseIntroductionSection(soup) or "")
     profile.triviaScore, profile.trivia = ParseATrivia(soup)
     return profile
+
+# Unit test
+if __name__ == "__main__" :
+    import WikiPagesProvider
+    import pywikibot
+    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger("pywiki").setLevel(logging.WARNING)
+    page = pywikibot.Page(WikiPagesProvider.siteZh, "火星")
+    distilled = DistillHtml(WikiPagesProvider.ParsePage(page))
+    parsed = WikiPagesProvider.ParseWikiPagePushInfo(page)
+    pprint(distilled.__dict__)
+    pprint(parsed.__dict__)
