@@ -1,4 +1,6 @@
-﻿import Confidential
+﻿#! python3
+
+import Confidential
 from weibo import APIClient
 from datetime import datetime
 import webbrowser
