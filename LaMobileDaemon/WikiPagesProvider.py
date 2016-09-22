@@ -5,6 +5,8 @@ import logging
 from pprint import pprint
 import os
 import WikiPageDistiller
+import re
+from Utility import byteLength, truncateByBytes
 
 # Change PyWikiBot working directory
 os.environ["PYWIKIBOT2_DIR"] = os.path.abspath("./Confidential")
@@ -23,18 +25,29 @@ if Confidential.WIKI_FAMILY_FILE :
 
 # Contains information for pushing a wiki page
 class WikiPagePushInfo :
-    def __init__(self, pageTitle : str, pageUrl : str, previewText : str, previewImageUrl : str) :
+    def __init__(self, pageTitle : str, pageUrl : str) :
         self.pageTitle = pageTitle
         self.pageUrl = pageUrl
-        self.previewText = previewText
-        self.previewImageUrl = previewImageUrl
-        self.postText = previewText      # preset
+        self.postImageUrl = None
+        self.postText = None            # preset
 
-    def getPostContent(bytesLimit : int = None) :
-        content = postText + "\n" + pageUrl
-        if (not bytesLimit or len(postText.encode(content)) > bytesLimit) :
-            #TODO Truncate
-            raise ValueError("Bytes limit exceeded.")
+    def getPostContent(self, postTextBytesLimit : int = None, contentBytesLimit : int = None) :
+        content = self.postText + "\n" + self.pageUrl
+        if postTextBytesLimit == None and contentBytesLimit != None:
+            # -1 for \n
+            postTextBytesLimit = bytesLimit - byteLength(self.pageUrl) - 1
+        if postTextBytesLimit != None :
+            if postTextBytesLimit <= 0 :
+                raise ValueError("Bytes limit exceeded. Expected: {0}. Actual: {1}." \
+                    .format(bytesLimit, byteLength(content)))
+            postText = self.postText
+            if postTextBytesLimit and byteLength(postText) > postTextBytesLimit :
+                # Leave some space for ellipsis
+                if postTextBytesLimit >= 3 :
+                    content = truncateByBytes(self.postText, postTextBytesLimit - 3) + "…"
+                else :
+                    content = truncateByBytes(self.postText, postTextBytesLimit)
+                content += "\n" + self.pageUrl
         return content
 
 site = pywikibot.getSite("zh")
@@ -55,20 +68,42 @@ try :
 except FileNotFoundError :
     logging.info("No shared terms recorded yet.")
 
+def BareDisambigTitle(title : str) :
+    return re.sub(r"\w+\(.+?\)", "", title, 1)
+
 def ParsePage(page : pywikibot.Page) :
-    request = site._simple_request(action="query", titles=page.title(),
+    # EXTENDED
+    # Retrieve parsed text of the page using action=parse.
+    # TODO choose variation
+    req = site._simple_request(action='parse', page=page, disabletoc=1, disableeditsection=1)
+    data = req.submit()
+    assert 'parse' in data, "API parse response lacks 'parse' key"
+    assert 'text' in data['parse'], "API parse response lacks 'text' key"
+    parsed_text = data['parse']['text']['*']
+    # Distill text
+    bareTitle = BareDisambigTitle(page.title())
+    distilled = WikiPageDistiller.DistillHtml(parsed_text)
+    info = WikiPagePushInfo(page.title(), page.full_url())
+    if distilled.triviaScore > 0 :
+        info.postText = distilled.trivia
+        if not bareTitle in info.postText : 
+            info.postText = distilled.introduction + info.postText
+    else :
+        info.postText = distilled.introduction
+    #elif len(distilled.introduction) < 50 :
+        #info.post
+    # Choose cover image
+    req = site._simple_request(action="query", titles=page.title(),
                                          prop="pageimages",
                                          piprop="thumbnail",
                                          pithumbsize=200)
-    data = request.submit()
+    data = req.submit()
     assert "query" in data, "API request response lacks 'query' key"
     assert "pages" in data["query"], "API request response lacks 'pages' key"
     _, page = data["query"]["pages"].popitem()
-    imageUrl = None
-    if "thumbnail" in page : imageUrl = page["thumbnail"]["source"]
-    print(imageUrl)
-    return WikiPagePushInfo(page.title(withNamespace=False), page.full_url(), None, imageUrl)
+    if "thumbnail" in page : info.postImageUrl = page["thumbnail"]["source"]
+    return info
 
 #def PickRandom() :
-#ParsePage(pywikibot.Page(site, "火星"))
-WikiPageDistiller.DistillHtml(pywikibot.Page(site, "火星")._get_parsed_page())
+
+print(ParsePage(pywikibot.Page(site, "呼唤野性")).getPostContent(postTextBytesLimit=280-24))
