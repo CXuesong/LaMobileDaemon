@@ -127,7 +127,7 @@ def GetCoverImage(page : pywikibot.Page) :
     req = page.site._simple_request(action="query", titles=page.title(),
                                     prop="pageimages",
                                     piprop="thumbnail|name",
-                                    pithumbsize=200)
+                                    pithumbsize=400)
     data = req.submit()
     assert "query" in data, "API request response lacks 'query' key"
     assert "pages" in data["query"], "API request response lacks 'pages' key"
