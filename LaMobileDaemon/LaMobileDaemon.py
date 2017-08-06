@@ -11,6 +11,7 @@ from io import BytesIO
 from urllib import request
 
 logging.getLogger().level = logging.INFO
+logging.getLogger("pywiki").level = logging.WARN
 
 client = APIClient(app_key=Confidential.APP_KEY, app_secret=Confidential.APP_SECRET, redirect_uri=Confidential.CALLBACK_URL)
 
