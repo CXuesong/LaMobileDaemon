@@ -33,7 +33,7 @@ def Login() :
     client.set_access_token(token, expires)
 
 def TestPost() :
-    print(client.statuses.update.post(status="测试状态。Test post."))
+    print(client.statuses.share.post(status="测试状态。Test post. http://huijiwiki.com"))
 
 def PushWikiPage() :
     wp = WikiPagesProvider.RecommendRandomPage()
@@ -41,7 +41,9 @@ def PushWikiPage() :
     image = wp.getImageResponse()
     # So that _encode_multipart in weibo.py will handle content-type correctly.
     image.name = wp.postImageName
-    client.statuses.upload.post(status=request.quote(wp.getPostContent(postTextBytesLimit=(140-12)*2)), pic=image)
+    postContent = wp.getPostContent(postTextBytesLimit=(140-12)*2)
+    logging.debug("Post content: %s", postContent)
+    client.statuses.share.post(status=request.quote(postContent), pic=image)
     logging.info("Pushed wiki page: %s .", wp.pageTitle)
 
 Login()
